@@ -15,7 +15,7 @@ async function ftech_llk_info(link) {
 }
 
 
-app.get('/anime/:year', async (req, res) => {
+app.get('/apiv2/anime/:year', async (req, res) => {
   try {
     const year = req.params.year
     const url = `https://animeidhentai.com/year/${year}/`;
@@ -45,7 +45,7 @@ app.get('/anime/:year', async (req, res) => {
   }
 });
 
-app.get('/anime/search/:query', async (req, res) => {
+app.get('/apiv2/anime/search/:query', async (req, res) => {
     try {
         const query = req.params.query;
         const url = 'https://animeidhentai.com/?s=';
