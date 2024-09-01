@@ -9,6 +9,12 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+async function ftech_llk_info(link) {
+    const resp = axios.get(link)
+    return (resp.data)
+}
+
+
 app.get('/anime/:year', async (req, res) => {
   try {
     const year = req.params.year
@@ -48,12 +54,14 @@ app.get('/anime/search/:query', async (req, res) => {
 
         const $ = cheerio.load(resp.data);
 
-        const lists = [];
-        $('.anime-list > article.anime.poster.por').each((i, elem) => {
+        const animeItems = $('.anime-list > article.anime.poster.por');
+        
+        // Create an array of promises for fetching iframe links
+        const promises = animeItems.map(async (i, elem) => {
             const title = $(elem).find('.anime-hd .ttl').text().trim(); // Extract and trim title
             const img = $(elem).find('img').attr('data-cfsrc') || $(elem).find('img').attr('src');
             const link = $(elem).find('a.lnk-blk').attr('href');
-
+            
             // Initialize meta information
             const metaInfo = {
                 year: '',
@@ -77,14 +85,23 @@ app.get('/anime/search/:query', async (req, res) => {
                 });
             });
 
-            lists.push({
+            // Fetch the page with the iframe link
+            const llk_resp = await axios.get(link);
+            const $2 = cheerio.load(llk_resp.data);
+            // Extract the src of the first iframe
+            const iframe_link = $2('iframe').first().attr('src');
+
+            return {
                 title,
                 img,
                 link,
-                meta: metaInfo // Add the metaInfo object with year, lang, and quality
-            });
-            console.log(title);
-        });
+                meta: metaInfo, // Add the metaInfo object with year, lang, and quality
+                iframe_link
+            };
+        }).get(); // Convert the Cheerio object to an array
+
+        // Wait for all promises to resolve
+        const lists = await Promise.all(promises);
 
         res.json(lists);
     } catch (error) {
@@ -92,7 +109,6 @@ app.get('/anime/search/:query', async (req, res) => {
         res.status(500).send('Error occurred while scraping the website.');
     }
 });
-
 
 
 app.listen(port, () => {
